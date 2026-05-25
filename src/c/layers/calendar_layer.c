@@ -190,6 +190,10 @@ void calendar_layer_refresh() {
     layer_mark_dirty(s_calendar_layer);
 }
 
+void calendar_layer_set_hidden(bool hidden) {
+    layer_set_hidden(s_calendar_layer, hidden);
+}
+
 void calendar_layer_destroy() {
     MEMORY_LOG_HEAP("calendar_layer_destroy:before");
     layer_destroy(s_calendar_layer);

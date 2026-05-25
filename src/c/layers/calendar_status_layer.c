@@ -6,6 +6,12 @@
 
 #define BATTERY_W 29
 #define BATTERY_H 10
+// circular battery uses a square frame sized to fit a readable arc + GOTHIC_14 text
+#ifdef PBL_PLATFORM_EMERY
+#define BATTERY_CIRCULAR_SIZE 26
+#else
+#define BATTERY_CIRCULAR_SIZE 22
+#endif
 #define PADDING 4
 #define MONTH_FONT_OFFSET 7
 #define ICON_SLOT_1 GRect(PADDING, 0, 10, 10)
@@ -134,7 +140,8 @@ static void calendar_status_update_proc(Layer *layer, GContext *ctx) {
         draw_bitmap(ctx, s_bt_disconnect_bitmap, GRect(icon_x, STATUS_ICON_Y(bounds.size.h, 10), 10, 10));
     }
 
-    draw_month_text(ctx, bounds);
+    if (g_config->show_calendar)
+        draw_month_text(ctx, bounds);
 }
 
 void calendar_status_layer_create(Layer* parent_layer, GRect frame) {
@@ -157,8 +164,12 @@ void calendar_status_layer_create(Layer* parent_layer, GRect frame) {
     layer_set_update_proc(s_calendar_status_layer, calendar_status_update_proc);
     MEMORY_HEAP_PROBE_SAMPLE("after_update_proc_set", &probe);
 
+    int bat_size = g_config->battery_circular ? BATTERY_CIRCULAR_SIZE : 0;
+    int bat_w = bat_size ? bat_size : BATTERY_W;
+    int bat_h = bat_size ? bat_size : BATTERY_H;
+    int bat_y = bat_size ? 1 : BATTERY_Y(bounds.size.h);
     battery_layer_create(s_calendar_status_layer,
-                         GRect(w - BATTERY_W - PADDING, BATTERY_Y(bounds.size.h), BATTERY_W, BATTERY_H));
+                         GRect(w - bat_w - PADDING, bat_y, bat_w, bat_h));
     MEMORY_HEAP_PROBE_SAMPLE("after_battery_layer_create", &probe);
 
     layer_add_child(parent_layer, s_calendar_status_layer);
@@ -194,6 +205,10 @@ void calendar_status_layer_refresh() {
     struct tm tm_now = watch_services_localtime();
     strftime(s_calendar_month_text, sizeof(s_calendar_month_text), "%b %Y", &tm_now);
     status_icons_refresh();
+}
+
+void calendar_status_layer_set_hidden(bool hidden) {
+    layer_set_hidden(s_calendar_status_layer, hidden);
 }
 
 void calendar_status_layer_destroy() {

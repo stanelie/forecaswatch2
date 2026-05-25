@@ -28,7 +28,9 @@ static Config config_defaults(void) {
         .color_sunday = GColorFolly,
         .color_us_federal = GColorFolly,
         .color_time = GColorWhite,
-        .day_night_shading = true
+        .day_night_shading = true,
+        .show_calendar = true,
+        .battery_circular = false
     };
 }
 

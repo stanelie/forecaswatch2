@@ -1,4 +1,5 @@
 #include "battery_layer.h"
+#include "c/appendix/config.h"
 #include "c/appendix/persist.h"
 #include "c/appendix/memory_log.h"
 #include "c/services/watch_services.h"
@@ -67,6 +68,33 @@ static void battery_update_proc(Layer *layer, GContext *ctx) {
     BatteryChargeState battery_state = watch_services_battery_state();
     int battery_level = battery_state.charge_percent;
     bool show_power_icon = battery_state.is_charging || battery_state.is_plugged;
+
+    if (g_config->battery_circular) {
+        maybe_unload_battery_power_bitmap(false);
+        // 1px inset on all sides keeps the 1px stroke fully within bounds
+        GRect circle_rect = GRect(1, 1, w - 2, h - 2);
+        graphics_context_set_stroke_width(ctx, 1);
+        if (show_power_icon) {
+            // Full white ring — charging indicator
+            graphics_context_set_stroke_color(ctx, GColorWhite);
+            graphics_draw_arc(ctx, circle_rect, GOvalScaleModeFitCircle, 0, TRIG_MAX_ANGLE);
+        } else {
+            int fill_angle = battery_level * TRIG_MAX_ANGLE / 100;
+            graphics_context_set_stroke_color(ctx, GColorWhite);
+            graphics_draw_arc(ctx, circle_rect, GOvalScaleModeFitCircle, 0, fill_angle);
+            // Percentage text centered inside the ring
+            char buf[4];
+            snprintf(buf, sizeof(buf), "%d", battery_level);
+            GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14);
+            graphics_context_set_text_color(ctx, GColorWhite);
+            int text_h = 16;
+            int text_y = circle_rect.origin.y + (circle_rect.size.h - text_h) / 2 - 1;
+            graphics_draw_text(ctx, buf, font,
+                GRect(circle_rect.origin.x, text_y, circle_rect.size.w, text_h),
+                GTextOverflowModeFill, GTextAlignmentCenter, NULL);
+        }
+        return;
+    }
 
     maybe_unload_battery_power_bitmap(show_power_icon);
 

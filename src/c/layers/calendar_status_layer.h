@@ -14,4 +14,6 @@ bool show_qt_icon();
 
 void calendar_status_layer_refresh();
 
+void calendar_status_layer_set_hidden(bool hidden);
+
 void calendar_status_layer_destroy();

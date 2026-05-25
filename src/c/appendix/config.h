@@ -26,6 +26,8 @@ typedef struct {
     GColor color_us_federal;
     GColor color_time;
     bool day_night_shading;
+    bool show_calendar;
+    bool battery_circular;
 } Config;
 
 extern Config *g_config;

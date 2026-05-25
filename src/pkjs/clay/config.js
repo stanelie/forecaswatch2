@@ -82,6 +82,12 @@ module.exports = [
                 "defaultValue": "Calendar",
             },
             {
+                "type": "toggle",
+                "label": "Show calendar",
+                "messageKey": "showCalendar",
+                "defaultValue": true,
+            },
+            {
                 "type": "select",
                 "label": "Start week on",
                 "messageKey": "weekStartDay",
@@ -224,6 +230,13 @@ module.exports = [
             {
                 "type": "heading",
                 "defaultValue": "Misc"
+            },
+            {
+                "type": "toggle",
+                "label": "Circular battery",
+                "messageKey": "batteryCircular",
+                "defaultValue": false,
+                "description": "Show battery as a circular arc instead of a bar."
             },
             {
                 "type": "toggle",
