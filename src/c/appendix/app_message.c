@@ -6,6 +6,7 @@
 #include "c/layers/loading_layer.h"
 #include "c/layers/calendar_layer.h"
 #include "c/layers/calendar_status_layer.h"
+#include "c/layers/current_weather_layer.h"
 #include "c/windows/main_window.h"
 #include "memory_log.h"
 
@@ -19,6 +20,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     Tuple *current_temp_tuple = dict_find(iterator, MESSAGE_KEY_CURRENT_TEMP);
     Tuple *city_tuple = dict_find(iterator, MESSAGE_KEY_CITY);
     Tuple *sun_events_tuple = dict_find(iterator, MESSAGE_KEY_SUN_EVENTS);
+    Tuple *condition_code_tuple = dict_find(iterator, MESSAGE_KEY_CONDITION_CODE);
 
     // Clay config options
     Tuple *clay_celsius_tuple = dict_find(iterator, MESSAGE_KEY_CLAY_CELSIUS);
@@ -63,6 +65,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         persist_set_temp_lo(lo);
         persist_set_temp_hi(hi);
         persist_set_current_temp((int)current_temp_tuple->value->int32);
+        if (condition_code_tuple)
+            persist_set_condition_code((int)condition_code_tuple->value->int32);
         uint8_t sun_event_start_type = (uint8_t) sun_events_tuple->value->uint8;
         time_t *sun_event_times = (time_t*) (sun_events_tuple->value->data + 1);
         persist_set_sun_event_start_type(sun_event_start_type);
@@ -72,6 +76,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         weather_status_layer_refresh();
         calendar_layer_refresh();
         calendar_status_layer_refresh();
+        current_weather_layer_refresh();
     }
     else if (clay_celsius_tuple && clay_time_lead_zero_tuple && clay_axis_12h_tuple && clay_start_mon_tuple && clay_prev_week_tuple
         && clay_color_today_tuple && clay_time_font_tuple && clay_vibe_tuple && clay_show_qt_tuple && clay_show_bt_tuple

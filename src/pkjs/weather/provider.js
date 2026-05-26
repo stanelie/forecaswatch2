@@ -608,7 +608,8 @@ WeatherProvider.prototype.getPayload = function() {
         CURRENT_TEMP: Math.round(this.currentTemp),
         CITY: this.cityName,
         // The first byte determines whether the list of events starts on a sunrise (0) or sunset (1)
-        SUN_EVENTS: [this.sunEvents[0].type === 'sunrise' ? 0 : 1].concat(sunEventsByteArray)
+        SUN_EVENTS: [this.sunEvents[0].type === 'sunrise' ? 0 : 1].concat(sunEventsByteArray),
+        CONDITION_CODE: typeof this.conditionCode === 'number' ? this.conditionCode : 9
     };
     return payload;
 };

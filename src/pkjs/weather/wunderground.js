@@ -43,8 +43,34 @@ WundergroundProvider.prototype.withWundergroundForecast = function(lat, lon, api
     );
 };
 
+// Maps Weather Underground icon codes (0-47) to our 10 condition codes.
+function wuIconToCondition(iconCode) {
+    if (typeof iconCode !== 'number' || iconCode < 0 || iconCode > 47) return 9;
+    if (iconCode <= 1)  return 9; // tornado
+    if (iconCode <= 4)  return 8; // thunder
+    if (iconCode <= 7)  return 7; // rain/snow mix
+    if (iconCode <= 9)  return 5; // drizzle
+    if (iconCode === 10) return 6; // freezing rain
+    if (iconCode <= 12) return 6; // showers
+    if (iconCode <= 16) return 7; // snow
+    if (iconCode === 17) return 8; // thunder
+    if (iconCode === 18) return 6; // sleet
+    if (iconCode <= 22) return 4; // fog/haze/smoke
+    if (iconCode <= 25) return 9; // wind/blustery/cold
+    if (iconCode === 26 || iconCode === 27 || iconCode === 28) return 3; // cloudy
+    if (iconCode === 29 || iconCode === 30) return 2; // partly cloudy
+    if (iconCode === 31 || iconCode === 33) return 1; // clear night
+    if (iconCode === 32 || iconCode === 34 || iconCode === 36) return 0; // sunny/clear
+    if (iconCode === 35 || (iconCode >= 37 && iconCode <= 39)) return 8; // thunder
+    if (iconCode === 40) return 6; // rain
+    if (iconCode >= 41 && iconCode <= 43) return 7; // snow
+    if (iconCode === 45 || iconCode === 47) return 8; // thunder
+    if (iconCode === 46) return 7; // rain/snow
+    return 9;
+}
+
 WundergroundProvider.prototype.withWundergroundCurrent = function(lat, lon, apiKey, callback, onFailure) {
-    // callback(wundergroundResponse)
+    // callback(temperature, iconCode)
     var url = 'https://api.weather.com/v3/wx/observations/current?language=en-US&units=e&format=json'
         + '&apiKey=' + apiKey
         + '&geocode=' + lat + ',' + lon;
@@ -69,7 +95,7 @@ WundergroundProvider.prototype.withWundergroundCurrent = function(lat, lon, apiK
                 return;
             }
 
-            callback(weatherData.temperature);
+            callback(weatherData.temperature, weatherData.iconCode);
         }).bind(this),
         function(error) {
             onFailure({ stage: 'provider_data', code: 'wu_current_' + error.code });
@@ -129,7 +155,7 @@ WundergroundProvider.prototype.withProviderData = function(lat, lon, force, onSu
     }
 
     this.withApiKey((function(apiKey) {
-        this.withWundergroundCurrent(lat, lon, apiKey, (function(currentTemp) {
+        this.withWundergroundCurrent(lat, lon, apiKey, (function(currentTemp, iconCode) {
             this.withWundergroundForecast(lat, lon, apiKey, (function(forecast) {
                 this.tempTrend = forecast.map(function(entry) {
                     return entry.temp;
@@ -139,6 +165,7 @@ WundergroundProvider.prototype.withProviderData = function(lat, lon, force, onSu
                 });
                 this.startTime = forecast[0].fcst_valid;
                 this.currentTemp = currentTemp;
+                this.conditionCode = wuIconToCondition(iconCode);
                 onSuccess();
             }).bind(this), onFailure);
         }).bind(this), onFailure);

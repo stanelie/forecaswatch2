@@ -4,6 +4,7 @@
 #include "c/layers/weather_status_layer.h"
 #include "c/layers/calendar_layer.h"
 #include "c/layers/calendar_status_layer.h"
+#include "c/layers/current_weather_layer.h"
 #include "c/appendix/config.h"
 #include "c/layers/loading_layer.h"
 #include "c/appendix/app_message.h"
@@ -13,18 +14,19 @@
 #define FORECAST_HEIGHT 51
 #define WEATHER_STATUS_HEIGHT 14
 #define TIME_HEIGHT 45
-#define CALENDAR_HEIGHT 45
 #define EMERY_WINDOW_PAD_X 2
 #define EMERY_WINDOW_PAD_TOP 2
 #define EMERY_WINDOW_PAD_BOTTOM 4
-// emery: increase top calendar status row height to fit larger month and icon alignment.
 #ifdef PBL_PLATFORM_EMERY
+#define CALENDAR_HEIGHT 45
 #define CALENDAR_STATUS_HEIGHT 20
 #define CALENDAR_STATUS_HEIGHT_CIRCULAR 28
 #else
-#define CALENDAR_STATUS_HEIGHT 13
-#define CALENDAR_STATUS_HEIGHT_CIRCULAR 24
-#define CALENDAR_HEIGHT_CIRCULAR 34  // CALENDAR_HEIGHT - (CIRCULAR - BAR) = 45 - 11 = 34
+// Status bar is 30px to fit GOTHIC_28 date text; calendar shrinks from 45 to 28 to compensate.
+#define CALENDAR_HEIGHT 28
+#define CALENDAR_STATUS_HEIGHT 30
+#define CALENDAR_STATUS_HEIGHT_CIRCULAR 30
+#define CALENDAR_HEIGHT_CIRCULAR 28
 #endif
 
 static Window *s_main_window;
@@ -70,8 +72,9 @@ static void main_window_load(Window *window) {
 
     forecast_layer_create(window_layer, GRect(content_x, forecast_y, forecast_w, forecast_h));
     weather_status_layer_create(window_layer, GRect(content_x, weather_status_y, content_w, WEATHER_STATUS_HEIGHT));
-    time_layer_create(window_layer, GRect(content_x, time_y, content_w, time_h));
-    calendar_layer_create(window_layer, GRect(content_x, calendar_y, content_w, calendar_h));
+    time_layer_create(window_layer, GRect(content_x, calendar_y, content_w, calendar_h));
+    calendar_layer_create(window_layer, GRect(content_x, time_y, content_w, time_h));
+    current_weather_layer_create(window_layer, GRect(content_x, time_y - 4, content_w, time_h));
     calendar_status_layer_create(window_layer, GRect(content_x, content_y, content_w, cal_status_h + 1)); // +1 to stop text clipping
     loading_layer_create(window_layer, GRect(content_x, weather_status_y, content_w, h - EMERY_WINDOW_PAD_BOTTOM - weather_status_y));
 #else
@@ -81,16 +84,20 @@ static void main_window_load(Window *window) {
     weather_status_layer_create(window_layer,
             GRect(0, h - FORECAST_HEIGHT - WEATHER_STATUS_HEIGHT, w, WEATHER_STATUS_HEIGHT));
     time_layer_create(window_layer,
+            GRect(0, cal_status_h, bounds.size.w, cal_h));
+    calendar_layer_create(window_layer,
             GRect(0, h - FORECAST_HEIGHT - WEATHER_STATUS_HEIGHT - TIME_HEIGHT,
             bounds.size.w, TIME_HEIGHT));
-    calendar_layer_create(window_layer,
-            GRect(0, cal_status_h, bounds.size.w, cal_h));
+    current_weather_layer_create(window_layer,
+            GRect(0, h - FORECAST_HEIGHT - WEATHER_STATUS_HEIGHT - TIME_HEIGHT - 4,
+            bounds.size.w, TIME_HEIGHT));
     calendar_status_layer_create(window_layer,
             GRect(0, 0, bounds.size.w, cal_status_h + 1));  // +1 to stop text clipping
     loading_layer_create(window_layer,
             GRect(0, h - FORECAST_HEIGHT - WEATHER_STATUS_HEIGHT, w, FORECAST_HEIGHT + WEATHER_STATUS_HEIGHT));
 #endif
     calendar_layer_set_hidden(!g_config->show_calendar);
+    current_weather_layer_set_hidden(g_config->show_calendar);
     loading_layer_refresh();
     app_message_send_startup_state(loading_layer_has_valid_data());
     MEMORY_LOG_HEAP("after_window_load");
@@ -102,6 +109,7 @@ static void main_window_unload(Window *window) {
     weather_status_layer_destroy();
     forecast_layer_destroy();
     calendar_layer_destroy();
+    current_weather_layer_destroy();
     calendar_status_layer_destroy();
     loading_layer_destroy();
     MEMORY_LOG_HEAP("after_window_unload");
@@ -145,8 +153,10 @@ void main_window_refresh() {
     weather_status_layer_refresh();
     forecast_layer_refresh();
     calendar_layer_set_hidden(!g_config->show_calendar);
+    current_weather_layer_set_hidden(g_config->show_calendar);
     if (g_config->show_calendar)
         calendar_layer_refresh();
+    current_weather_layer_refresh();
     calendar_status_layer_refresh();
 }
 

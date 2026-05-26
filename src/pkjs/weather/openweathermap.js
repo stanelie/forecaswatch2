@@ -90,6 +90,19 @@ OpenWeatherMapProvider.prototype.withSunEvents = function(lat, lon, callback, on
     }).bind(this), onFailure);
 };
 
+function owmConditionCode(id, icon) {
+    var isNight = icon && icon[icon.length - 1] === 'n';
+    if (id >= 200 && id < 300) return 8; // thunder
+    if (id >= 300 && id < 400) return 5; // drizzle
+    if (id >= 500 && id < 600) return 6; // rain
+    if (id >= 600 && id < 700) return 7; // snow
+    if (id >= 700 && id < 800) return 4; // fog/atmosphere
+    if (id === 800) return isNight ? 1 : 0; // clear day/night
+    if (id === 801 || id === 802) return 2; // partly cloudy
+    if (id >= 803) return 3; // cloudy
+    return 9; // N/A
+}
+
 OpenWeatherMapProvider.prototype.withProviderData = function(lat, lon, force, onSuccess, onFailure) {
     // onSuccess expects that this.hasValidData() will be true
     console.log('This is the overridden implementation of withProviderData');
@@ -102,6 +115,10 @@ OpenWeatherMapProvider.prototype.withProviderData = function(lat, lon, force, on
         });
         this.startTime = weatherData.hourly[0].dt;
         this.currentTemp = weatherData.current.temp;
+        var currentWeather = weatherData.current.weather && weatherData.current.weather[0];
+        this.conditionCode = currentWeather
+            ? owmConditionCode(currentWeather.id, currentWeather.icon)
+            : 9;
         onSuccess();
     }).bind(this), onFailure);
 };

@@ -17,18 +17,11 @@
 #define ICON_SLOT_1 GRect(PADDING, 0, 10, 10)
 #define ICON_SLOT_2 GRect(PADDING * 2 + 10, 0, 10, 10)
 // emery: center icons in the taller status row.
-#ifdef PBL_PLATFORM_EMERY
 #define STATUS_ICON_Y(bounds_h, icon_h) (((bounds_h) - (icon_h)) / 2)
 #define BATTERY_Y(bounds_h) (((bounds_h) - BATTERY_H) / 2)
-#define MONTH_FONT_KEY FONT_KEY_GOTHIC_24
-#else
-#define STATUS_ICON_Y(bounds_h, icon_h) ((void)(bounds_h), (void)(icon_h), 0)
-#define BATTERY_Y(bounds_h) ((void)(bounds_h), 1)
-#define MONTH_FONT_KEY FONT_KEY_GOTHIC_18
-#endif
 
 static Layer *s_calendar_status_layer;
-static char s_calendar_month_text[10];
+static char s_calendar_month_text[20]; // "Wednesday Sep 30" + null
 static GBitmap *s_mute_bitmap;
 static GBitmap *s_bt_bitmap;
 static GBitmap *s_bt_disconnect_bitmap;
@@ -46,12 +39,12 @@ static GRect month_text_rect(GRect bounds, GFont font) {
     return GRect(0, text_y, bounds.size.w, text_size.h + 3);
 #else
     (void)font;
-    return GRect(0, -MONTH_FONT_OFFSET, bounds.size.w, 25);
+    return GRect(0, 0, bounds.size.w, bounds.size.h);
 #endif
 }
 
 static void draw_month_text(GContext *ctx, GRect bounds) {
-    const GFont month_font = fonts_get_system_font(MONTH_FONT_KEY);
+    const GFont month_font = config_status_date_font(bounds.size.h);
     graphics_context_set_text_color(ctx, GColorWhite);
     graphics_draw_text(
         ctx,
@@ -140,8 +133,7 @@ static void calendar_status_update_proc(Layer *layer, GContext *ctx) {
         draw_bitmap(ctx, s_bt_disconnect_bitmap, GRect(icon_x, STATUS_ICON_Y(bounds.size.h, 10), 10, 10));
     }
 
-    if (g_config->show_calendar)
-        draw_month_text(ctx, bounds);
+    draw_month_text(ctx, bounds);
 }
 
 void calendar_status_layer_create(Layer* parent_layer, GRect frame) {
@@ -167,7 +159,7 @@ void calendar_status_layer_create(Layer* parent_layer, GRect frame) {
     int bat_size = g_config->battery_circular ? BATTERY_CIRCULAR_SIZE : 0;
     int bat_w = bat_size ? bat_size : BATTERY_W;
     int bat_h = bat_size ? bat_size : BATTERY_H;
-    int bat_y = bat_size ? 1 : BATTERY_Y(bounds.size.h);
+    int bat_y = bat_size ? (bounds.size.h - bat_size) / 2 : BATTERY_Y(bounds.size.h);
     battery_layer_create(s_calendar_status_layer,
                          GRect(w - bat_w - PADDING, bat_y, bat_w, bat_h));
     MEMORY_HEAP_PROBE_SAMPLE("after_battery_layer_create", &probe);
@@ -203,7 +195,12 @@ void status_icons_refresh() {
 
 void calendar_status_layer_refresh() {
     struct tm tm_now = watch_services_localtime();
-    strftime(s_calendar_month_text, sizeof(s_calendar_month_text), "%b %Y", &tm_now);
+    char day_name[12];
+    char month_abbr[8];
+    strftime(day_name, sizeof(day_name), "%a", &tm_now);
+    strftime(month_abbr, sizeof(month_abbr), "%b", &tm_now);
+    snprintf(s_calendar_month_text, sizeof(s_calendar_month_text),
+             "%s %s %d", day_name, month_abbr, tm_now.tm_mday);
     status_icons_refresh();
 }
 

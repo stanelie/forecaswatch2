@@ -56,7 +56,17 @@
           "name": "IMAGE_BATTERY_CHARGING",
           "file": "img/battery-charging.png",
           "memoryFormat": "1BitPalette"
-        }
+        },
+        { "type": "png", "name": "IMAGE_WEATHER_CLEAR_DAY",    "file": "img/weather/clear-day.png" },
+        { "type": "png", "name": "IMAGE_WEATHER_CLEAR_NIGHT",  "file": "img/weather/clear-night.png" },
+        { "type": "png", "name": "IMAGE_WEATHER_PARTLY_CLOUDY","file": "img/weather/partly-cloudy.png" },
+        { "type": "png", "name": "IMAGE_WEATHER_CLOUDY",       "file": "img/weather/cloudy.png" },
+        { "type": "png", "name": "IMAGE_WEATHER_FOG",          "file": "img/weather/fog.png" },
+        { "type": "png", "name": "IMAGE_WEATHER_DRIZZLE",      "file": "img/weather/drizzle.png" },
+        { "type": "png", "name": "IMAGE_WEATHER_RAIN",         "file": "img/weather/rain.png" },
+        { "type": "png", "name": "IMAGE_WEATHER_SNOW",         "file": "img/weather/snow.png" },
+        { "type": "png", "name": "IMAGE_WEATHER_THUNDER",      "file": "img/weather/thunder.png" },
+        { "type": "png", "name": "IMAGE_WEATHER_NA",           "file": "img/weather/na.png" }
       ]
     },
     "capabilities": [
@@ -90,7 +100,8 @@
       "CLAY_COLOR_TIME",
       "CLAY_DAY_NIGHT_SHADING",
       "CLAY_SHOW_CALENDAR",
-      "CLAY_BATTERY_CIRCULAR"
+      "CLAY_BATTERY_CIRCULAR",
+      "CONDITION_CODE"
     ]
   }
 }

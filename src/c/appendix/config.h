@@ -53,3 +53,5 @@ bool config_highlight_holidays();
 bool config_highlight_sundays();
 
 bool config_highlight_saturdays();
+
+GFont config_status_date_font(int available_h);

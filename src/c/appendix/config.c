@@ -128,3 +128,12 @@ bool config_highlight_sundays() {
 bool config_highlight_saturdays() {
     return !gcolor_equal(g_config->color_saturday, GColorWhite);
 }
+
+GFont config_status_date_font(int available_h) {
+    bool bold = (g_config->time_font == TIME_FONT_BITHAM);
+    if (available_h >= 28)
+        return fonts_get_system_font(bold ? FONT_KEY_GOTHIC_28_BOLD : FONT_KEY_GOTHIC_28);
+    if (available_h >= 18)
+        return fonts_get_system_font(bold ? FONT_KEY_GOTHIC_18_BOLD : FONT_KEY_GOTHIC_18);
+    return fonts_get_system_font(bold ? FONT_KEY_GOTHIC_14_BOLD : FONT_KEY_GOTHIC_14);
+}

@@ -3,7 +3,7 @@
 
 enum key {
     TEMP_LO, TEMP_HI, TEMP_TREND, PRECIP_TREND, FORECAST_START, CITY, SUN_EVENT_START_TYPE, SUN_EVENT_TIMES, NUM_ENTRIES,
-    CURRENT_TEMP, BATTERY_LEVEL, CONFIG
+    CURRENT_TEMP, BATTERY_LEVEL, CONFIG, CONDITION_CODE
 }; // Deprecated: BATTERY_LEVEL
 
 void persist_init() {
@@ -92,6 +92,12 @@ int persist_get_current_temp() {
     return persist_read_int(CURRENT_TEMP);
 }
 
+int persist_get_condition_code() {
+    if (!persist_exists(CONDITION_CODE))
+        return 9; // N/A until first weather fetch with condition data
+    return persist_read_int(CONDITION_CODE);
+}
+
 int persist_get_city(char *buffer, const size_t buffer_size) {
     return persist_read_string(CITY, buffer, buffer_size);
 }
@@ -134,6 +140,10 @@ void persist_set_num_entries(int val) {
 
 void persist_set_current_temp(int val) {
     persist_write_int(CURRENT_TEMP, val);
+}
+
+void persist_set_condition_code(int val) {
+    persist_write_int(CONDITION_CODE, val);
 }
 
 void persist_set_city(char *val) {
