@@ -98,6 +98,7 @@ static void main_window_load(Window *window) {
 #endif
     calendar_layer_set_hidden(!g_config->show_calendar);
     current_weather_layer_set_hidden(g_config->show_calendar);
+    weather_status_layer_set_temp_hidden(!g_config->show_calendar);
     loading_layer_refresh();
     app_message_send_startup_state(loading_layer_has_valid_data());
     MEMORY_LOG_HEAP("after_window_load");
@@ -154,6 +155,7 @@ void main_window_refresh() {
     forecast_layer_refresh();
     calendar_layer_set_hidden(!g_config->show_calendar);
     current_weather_layer_set_hidden(g_config->show_calendar);
+    weather_status_layer_set_temp_hidden(!g_config->show_calendar);
     if (g_config->show_calendar)
         calendar_layer_refresh();
     current_weather_layer_refresh();

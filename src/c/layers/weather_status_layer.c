@@ -33,6 +33,7 @@ static TextLayer *s_city_layer;
 static TextLayer *s_current_temp_layer;
 static TextLayer *s_next_sun_event_layer;
 
+static bool s_temp_hidden = false;
 static GPath *s_arrow_path = NULL;
 static const GPathInfo ARROW_PATH_INFO = {
     // Downward facing arrow, centered at the origin
@@ -60,7 +61,7 @@ static void city_layer_refresh() {
     // Dynamic resizing
     GRect bounds = layer_get_bounds(s_weather_status_layer);
     GSize size = text_layer_get_content_size(s_city_layer);
-    int x = frame_curr_temp.origin.x + frame_curr_temp.size.w + MARGIN * 2;
+    int x = s_temp_hidden ? MARGIN : (frame_curr_temp.origin.x + frame_curr_temp.size.w + MARGIN * 2);
     int y;
     int h;
     // emery: align city text baseline with 18px font metrics instead of 14px metrics.
@@ -71,7 +72,8 @@ static void city_layer_refresh() {
     y = -FONT_14_OFFSET;
     h = size.h + FONT_14_OFFSET;
 #endif
-    int w = bounds.size.w - frame_curr_temp.size.w - frame_sun_event.size.w - MARGIN * 4;
+    int temp_w = s_temp_hidden ? 0 : frame_curr_temp.size.w;
+    int w = bounds.size.w - temp_w - frame_sun_event.size.w - MARGIN * 4;
     text_layer_move_frame(s_city_layer, GRect(x, y, w, h));
 }
 
@@ -200,6 +202,12 @@ void weather_status_layer_refresh() {
     sun_event_layer_refresh();
     city_layer_refresh();
     MEMORY_LOG_HEAP("after_weather_refresh");
+}
+
+void weather_status_layer_set_temp_hidden(bool hidden) {
+    s_temp_hidden = hidden;
+    layer_set_hidden(text_layer_get_layer(s_current_temp_layer), hidden);
+    city_layer_refresh();
 }
 
 void weather_status_layer_destroy() {
