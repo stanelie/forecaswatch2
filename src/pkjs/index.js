@@ -2,7 +2,6 @@
 var WundergroundProvider = require('./weather/wunderground.js');
 var OpenWeatherMapProvider = require('./weather/openweathermap.js')
 var WeatherProvider = require('./weather/provider.js');
-var createTelemetryClient = require('./telemetry.js');
 var Clay = require('./clay/_source.js');
 var clayConfig = require('./clay/config.js');
 var customClay = require('./clay/inject.js');
@@ -32,7 +31,6 @@ var clay = new Clay(clayConfig, customClay, { autoHandleEvents: false });
  *     fetchInProgress: boolean,
  *     pendingStartupFetch: boolean,
  *     settings?: Object,
- *     telemetry?: Object,
  *     provider?: Object,
  *     watchInfo?: Object,
  *     devConfig?: Object
@@ -40,7 +38,6 @@ var clay = new Clay(clayConfig, customClay, { autoHandleEvents: false });
  */
 var app = {};  // Namespace for global app variables
 var KEY_MAX_NOTIFIED_VERSION = 'max_notified_version';
-var KEY_FETCH_ATTEMPT = storageKeys.FETCH_ATTEMPT_KEY;
 var KEY_LAST_FETCH_SUCCESS = storageKeys.LAST_FETCH_SUCCESS_KEY;
 var KEY_LAST_FETCH_ATTEMPT = storageKeys.LAST_FETCH_ATTEMPT_KEY;
 var KEY_GEOCODE_CACHE = storageKeys.GEOCODE_CACHE_KEY;
@@ -91,7 +88,6 @@ Pebble.addEventListener('webviewclosed', function(e) {
 
     clay.getSettings(e.response, false);  // This triggers the update in localStorage
     app.settings = getClaySettings();  // This reads from localStorage in sensible format
-    app.telemetry = createTelemetryClient(getRuntimeTelemetryConfig());
     refreshProvider();
     sendClaySettings();
 
@@ -128,7 +124,6 @@ Pebble.addEventListener('ready',
             app.watchInfo = null;
             console.log('Unable to read watch info: ' + ex.message);
         }
-        app.telemetry = createTelemetryClient(getRuntimeTelemetryConfig());
         refreshProvider();
         if (activeFixture) {
             sendClaySettings(function() {
@@ -148,24 +143,6 @@ Pebble.addEventListener('ready',
         startTick();
     }
 );
-
-/**
- * Build telemetry runtime config from package.json.
- *
- * @returns {{enabled: boolean, endpoint: string, appVersion: string, buildProfile: string}} Runtime telemetry config.
- */
-function getRuntimeTelemetryConfig() {
-    var telemetry = pkg.telemetry || {};
-    var endpoint = typeof telemetry.endpoint === 'string' ? telemetry.endpoint : '';
-    var telemetryEnabled = !app.settings || app.settings.telemetryEnabled !== false;
-
-    return {
-        enabled: telemetryEnabled,
-        endpoint: endpoint,
-        appVersion: pkg.version,
-        buildProfile: pkg.buildProfile
-    };
-}
 
 /**
  * Parse a semver-like string into numeric major/minor/patch parts.
@@ -434,42 +411,6 @@ function maybeHandleDevStorageReset(devConfig) {
     }
 }
 
-/**
- * Read the persisted weather fetch attempt counter.
- *
- * @returns {number} Non-negative integer attempt counter.
- */
-function getFetchAttemptCounter() {
-    var raw = localStorage.getItem(KEY_FETCH_ATTEMPT);
-    var parsed = Number(raw);
-
-    if (!isFinite(parsed) || parsed < 0) {
-        return 0;
-    }
-
-    return Math.floor(parsed);
-}
-
-/**
- * Increment and persist the weather fetch attempt counter.
- *
- * @returns {number} New attempt number after increment.
- */
-function incrementFetchAttemptCounter() {
-    var nextAttempt = getFetchAttemptCounter() + 1;
-    localStorage.setItem(KEY_FETCH_ATTEMPT, String(nextAttempt));
-    return nextAttempt;
-}
-
-/**
- * Reset the weather fetch attempt counter after success.
- *
- * @returns {void}
- */
-function resetFetchAttemptCounter() {
-    localStorage.setItem(KEY_FETCH_ATTEMPT, '0');
-}
-
 function startTick() {
     console.log('Tick from PKJS!');
     tryFetch(app.provider);
@@ -601,7 +542,6 @@ function getDefaultClaySettings() {
         showQt: true,
         vibe: false,
         btIcons: 'both',
-        telemetryEnabled: true
     };
 }
 
@@ -884,8 +824,6 @@ function fetch(provider, force) {
 
     console.log('Fetching from ' + provider.name);
     app.fetchInProgress = true;
-    var fetchStart = Date.now();
-    var attempt = incrementFetchAttemptCounter();
     var fetchStatus = {
         time: new Date(),
         id: provider.id,
@@ -898,20 +836,7 @@ function fetch(provider, force) {
                 // Sucess, update recent fetch time
                 app.fetchInProgress = false;
                 localStorage.setItem(KEY_LAST_FETCH_SUCCESS, JSON.stringify(fetchStatus));
-                resetFetchAttemptCounter();
                 console.log('Successfully fetched weather!');
-                maybeTrackWeatherFetch({
-                    provider: provider.id,
-                    success: true,
-                    attempt: attempt,
-                    usedGpsCache: provider.usedGpsCache,
-                    gpsErrorCode: provider.gpsErrorCode,
-                    locationMode: provider.locationMode,
-                    countryCode: provider.countryCode,
-                    settings: app.settings,
-                    watchInfo: app.watchInfo,
-                    durationMs: Date.now() - fetchStart
-                });
             },
             function(failure) {
                 // Failure
@@ -924,19 +849,6 @@ function fetch(provider, force) {
                     error: failure
                 };
                 localStorage.setItem(KEY_LAST_FETCH_ATTEMPT, JSON.stringify(attemptStatus));
-                maybeTrackWeatherFetch({
-                    provider: provider.id,
-                    success: false,
-                    attempt: attempt,
-                    usedGpsCache: provider.usedGpsCache,
-                    gpsErrorCode: provider.gpsErrorCode,
-                    locationMode: provider.locationMode,
-                    countryCode: provider.countryCode,
-                    error: failure,
-                    settings: app.settings,
-                    watchInfo: app.watchInfo,
-                    durationMs: Date.now() - fetchStart
-                });
             },
             force
         )
@@ -945,19 +857,6 @@ function fetch(provider, force) {
         app.fetchInProgress = false;
         console.log('Weather fetch threw synchronously: ' + e.message);
     }
-}
-
-/**
- * Send a weather fetch telemetry event when telemetry is enabled.
- *
- * @param {Object} event Telemetry event details.
- * @returns {void}
- */
-function maybeTrackWeatherFetch(event) {
-    if (!app.telemetry || app.telemetry.enabled !== true) {
-        return;
-    }
-    app.telemetry.trackWeatherFetch(event || {});
 }
 
 function tryFetch(provider) {
