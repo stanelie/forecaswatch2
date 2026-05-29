@@ -270,7 +270,7 @@ WeatherProvider.prototype.withCityName = function(lat, lon, callback, onFailure)
             }
 
             address = body.address || {};
-            name = address.District || address.City || address.Region || 'Unknown';
+            name = address.City || address.District || address.Region || 'Unknown';
             countryCode = address.CountryCode || null;
             console.log('Running callback with city: ' + name + ', countryCode=' + countryCode);
             callback(name, countryCode);

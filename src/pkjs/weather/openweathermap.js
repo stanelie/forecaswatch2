@@ -103,6 +103,39 @@ function owmConditionCode(id, icon) {
     return 9; // N/A
 }
 
+OpenWeatherMapProvider.prototype.withCityName = function(lat, lon, callback, onFailure) {
+    var url = 'https://api.openweathermap.org/geo/1.0/reverse?lat=' + lat + '&lon=' + lon + '&limit=1&appid=' + this.apiKey;
+
+    request(
+        url,
+        'GET',
+        function(response) {
+            var results;
+            var name;
+            var countryCode;
+            try {
+                results = JSON.parse(response);
+            }
+            catch (ex) {
+                onFailure({ stage: 'reverse_geocode', code: 'parse_error' });
+                return;
+            }
+            if (!Array.isArray(results) || results.length === 0) {
+                onFailure({ stage: 'reverse_geocode', code: 'no_results' });
+                return;
+            }
+            name = results[0].name || 'Unknown';
+            countryCode = results[0].country || null;
+            console.log('Running callback with city: ' + name + ', countryCode=' + countryCode);
+            callback(name, countryCode);
+        },
+        function(error) {
+            console.log('[!] OWM reverse geocode failed: ' + JSON.stringify(error));
+            onFailure({ stage: 'reverse_geocode', code: error.code });
+        }
+    );
+};
+
 OpenWeatherMapProvider.prototype.withProviderData = function(lat, lon, force, onSuccess, onFailure) {
     // onSuccess expects that this.hasValidData() will be true
     console.log('This is the overridden implementation of withProviderData');
