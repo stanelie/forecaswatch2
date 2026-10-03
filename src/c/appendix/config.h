@@ -28,6 +28,7 @@ typedef struct {
     bool day_night_shading;
     bool show_calendar;
     bool battery_circular;
+    bool precip_amount_bars;
 } Config;
 
 extern Config *g_config;

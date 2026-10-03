@@ -1,6 +1,7 @@
 
 var WundergroundProvider = require('./weather/wunderground.js');
 var OpenWeatherMapProvider = require('./weather/openweathermap.js')
+var OpenMeteoProvider = require('./weather/openmeteo.js');
 var WeatherProvider = require('./weather/provider.js');
 var Clay = require('./clay/_source.js');
 var clayConfig = require('./clay/config.js');
@@ -438,6 +439,7 @@ function sendClaySettings(onSuccess, onFailure) {
         "CLAY_DAY_NIGHT_SHADING": app.settings.hasOwnProperty('dayNightShading') ? app.settings.dayNightShading : true,
         "CLAY_SHOW_CALENDAR": app.settings.hasOwnProperty('showCalendar') ? app.settings.showCalendar : true,
         "CLAY_BATTERY_CIRCULAR": app.settings.hasOwnProperty('batteryCircular') ? app.settings.batteryCircular : false,
+        "CLAY_PRECIP_AMOUNT_BARS": app.settings.hasOwnProperty('precipAmountBars') ? app.settings.precipAmountBars : true,
     }
     Pebble.sendAppMessage(payload, function() {
         console.log('Message sent successfully: ' + JSON.stringify(payload));
@@ -468,6 +470,9 @@ function setProvider(providerId) {
     switch (providerId) {
         case 'openweathermap':
             app.provider = new OpenWeatherMapProvider(app.settings.owmApiKey);
+            break;
+        case 'openmeteo':
+            app.provider = new OpenMeteoProvider();
             break;
         case 'wunderground':
             app.provider = new WundergroundProvider();
@@ -528,6 +533,7 @@ function getDefaultClaySettings() {
         location: '',
         temperatureUnits: 'f',
         dayNightShading: true,
+        precipAmountBars: true,
         timeLeadingZero: false,
         timeShowAmPm: false,
         axisTimeFormat: '24h',
@@ -770,6 +776,8 @@ function getFixtureWeatherPayload(fixture) {
     provider.precipTrend = Array.isArray(weather.precipPct) ? weather.precipPct.map(function(probabilityPercent) {
         return probabilityPercent / 100.0;
     }) : [];
+    provider.precipAmountTrend = Array.isArray(weather.precipAmount) ? weather.precipAmount.slice(0) :
+        provider.tempTrend.map(function() { return 0; });
     provider.sunEvents = sunEvents;
 
     if (provider.numEntries <= 0 || sunEvents.length < 2 || !provider.hasValidData()) {

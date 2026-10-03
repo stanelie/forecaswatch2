@@ -30,7 +30,8 @@ static Config config_defaults(void) {
         .color_time = GColorWhite,
         .day_night_shading = true,
         .show_calendar = true,
-        .battery_circular = false
+        .battery_circular = false,
+        .precip_amount_bars = true
     };
 }
 

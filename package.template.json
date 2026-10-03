@@ -1,7 +1,7 @@
 {
   "name": "forecaswatch2",
   "author": "Matt Rossman",
-  "version": "1.34.0",
+  "version": "1.37.0",
   "buildProfile": "{{buildProfile}}",
   "keywords": [
     "pebble-app"
@@ -76,6 +76,7 @@
     "messageKeys": [
       "TEMP_TREND_INT16",
       "PRECIP_TREND_UINT8",
+      "PRECIP_AMOUNT_TREND_UINT8",
       "FORECAST_START",
       "NUM_ENTRIES",
       "CURRENT_TEMP",
@@ -101,7 +102,8 @@
       "CLAY_DAY_NIGHT_SHADING",
       "CLAY_SHOW_CALENDAR",
       "CLAY_BATTERY_CIRCULAR",
-      "CONDITION_CODE"
+      "CONDITION_CODE",
+      "CLAY_PRECIP_AMOUNT_BARS"
     ]
   }
 }

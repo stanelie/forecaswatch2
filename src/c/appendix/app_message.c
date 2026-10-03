@@ -15,6 +15,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     // Weather data
     Tuple *temp_trend_tuple = dict_find(iterator, MESSAGE_KEY_TEMP_TREND_INT16);
     Tuple *precip_trend_tuple = dict_find(iterator, MESSAGE_KEY_PRECIP_TREND_UINT8);
+    Tuple *precip_amount_trend_tuple = dict_find(iterator, MESSAGE_KEY_PRECIP_AMOUNT_TREND_UINT8);
     Tuple *forecast_start_tuple = dict_find(iterator, MESSAGE_KEY_FORECAST_START);
     Tuple *num_entries_tuple = dict_find(iterator, MESSAGE_KEY_NUM_ENTRIES);
     Tuple *current_temp_tuple = dict_find(iterator, MESSAGE_KEY_CURRENT_TEMP);
@@ -42,8 +43,9 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     Tuple *clay_day_night_shading_tuple = dict_find(iterator, MESSAGE_KEY_CLAY_DAY_NIGHT_SHADING);
     Tuple *clay_show_calendar_tuple = dict_find(iterator, MESSAGE_KEY_CLAY_SHOW_CALENDAR);
     Tuple *clay_battery_circular_tuple = dict_find(iterator, MESSAGE_KEY_CLAY_BATTERY_CIRCULAR);
+    Tuple *clay_precip_amount_bars_tuple = dict_find(iterator, MESSAGE_KEY_CLAY_PRECIP_AMOUNT_BARS);
 
-    if(temp_trend_tuple && temp_trend_tuple && forecast_start_tuple && num_entries_tuple && city_tuple && sun_events_tuple) {
+    if(temp_trend_tuple && precip_trend_tuple && precip_amount_trend_tuple && forecast_start_tuple && num_entries_tuple && city_tuple && sun_events_tuple) {
         // Weather data received
         APP_LOG(APP_LOG_LEVEL_INFO, "All tuples received!");
         persist_set_forecast_start((time_t)forecast_start_tuple->value->int32);
@@ -59,6 +61,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         persist_set_temp_trend(temp_data, num_entries);
         uint8_t *precip_data = (uint8_t*) precip_trend_tuple->value->data;
         persist_set_precip_trend(precip_data, num_entries);
+        persist_set_precip_amount_trend((uint8_t*) precip_amount_trend_tuple->value->data, num_entries);
         persist_set_city((char*)city_tuple->value->cstring);
         int lo, hi;
         min_max(temp_data, num_entries, &lo, &hi);
@@ -82,7 +85,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         && clay_color_today_tuple && clay_time_font_tuple && clay_vibe_tuple && clay_show_qt_tuple && clay_show_bt_tuple
         && clay_show_bt_disconnect_tuple && clay_show_am_pm_tuple && clay_color_saturday_tuple && clay_color_sunday_tuple
         && clay_color_us_federal_tuple && clay_color_time_tuple && clay_day_night_shading_tuple && clay_show_calendar_tuple
-        && clay_battery_circular_tuple) {
+        && clay_battery_circular_tuple && clay_precip_amount_bars_tuple) {
         // Clay config data received
         bool clay_celsius = (bool) (clay_celsius_tuple->value->int16);
         bool time_lead_zero = (bool) (clay_time_lead_zero_tuple->value->int16);
@@ -97,6 +100,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         bool day_night_shading = (bool) (clay_day_night_shading_tuple->value->int16);
         bool show_calendar = (bool) (clay_show_calendar_tuple->value->int16);
         bool battery_circular = (bool) (clay_battery_circular_tuple->value->int16);
+        bool precip_amount_bars = (bool) (clay_precip_amount_bars_tuple->value->int16);
         int16_t time_font = clay_time_font_tuple->value->int16;
         GColor color_today = GColorFromHEX(clay_color_today_tuple->value->int32);
         GColor color_saturday = GColorFromHEX(clay_color_saturday_tuple->value->int32);
@@ -122,7 +126,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
             .color_time = color_time,
             .day_night_shading = day_night_shading,
             .show_calendar = show_calendar,
-            .battery_circular = battery_circular
+            .battery_circular = battery_circular,
+            .precip_amount_bars = precip_amount_bars
         };
         persist_set_config(config);
         main_window_refresh();
