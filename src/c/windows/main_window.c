@@ -14,6 +14,7 @@
 #define FORECAST_HEIGHT 51
 #define WEATHER_STATUS_HEIGHT 14
 #define TIME_HEIGHT 45
+#define CLOCK_SHIFT_Y 3  // 144px-wide watches: gap between date line and clock
 #define EMERY_WINDOW_PAD_X 2
 #define EMERY_WINDOW_PAD_TOP 2
 #define EMERY_WINDOW_PAD_BOTTOM 4
@@ -22,11 +23,11 @@
 #define CALENDAR_STATUS_HEIGHT 20
 #define CALENDAR_STATUS_HEIGHT_CIRCULAR 28
 #else
-// Status bar is 30px to fit GOTHIC_28 date text; calendar shrinks from 45 to 28 to compensate.
-#define CALENDAR_HEIGHT 28
-#define CALENDAR_STATUS_HEIGHT 30
-#define CALENDAR_STATUS_HEIGHT_CIRCULAR 30
-#define CALENDAR_HEIGHT_CIRCULAR 28
+// 144x168 watches (aplite/basalt/diorite/flint): compact status bar, full-height clock band.
+#define CALENDAR_HEIGHT 45
+#define CALENDAR_STATUS_HEIGHT 13
+#define CALENDAR_STATUS_HEIGHT_CIRCULAR 24
+#define CALENDAR_HEIGHT_CIRCULAR 34  // CALENDAR_HEIGHT - (CIRCULAR - BAR) = 45 - 11 = 34
 #endif
 
 static Window *s_main_window;
@@ -83,13 +84,17 @@ static void main_window_load(Window *window) {
             GRect(0, h - FORECAST_HEIGHT, w, FORECAST_HEIGHT));
     weather_status_layer_create(window_layer,
             GRect(0, h - FORECAST_HEIGHT - WEATHER_STATUS_HEIGHT, w, WEATHER_STATUS_HEIGHT));
+    // The clock digits (~35px) are taller than the circular-battery band (34px), so let the band
+    // reach up under the transparent part of the status bar.
+    int time_overlap = g_config->battery_circular ? 3 : 0;
+    // Then drop the whole band a few pixels for breathing room under the date line.
     time_layer_create(window_layer,
-            GRect(0, cal_status_h, bounds.size.w, cal_h));
+            GRect(0, cal_status_h - time_overlap + CLOCK_SHIFT_Y, bounds.size.w, cal_h + time_overlap));
     calendar_layer_create(window_layer,
             GRect(0, h - FORECAST_HEIGHT - WEATHER_STATUS_HEIGHT - TIME_HEIGHT,
             bounds.size.w, TIME_HEIGHT));
     current_weather_layer_create(window_layer,
-            GRect(0, h - FORECAST_HEIGHT - WEATHER_STATUS_HEIGHT - TIME_HEIGHT - 4,
+            GRect(0, h - FORECAST_HEIGHT - WEATHER_STATUS_HEIGHT - TIME_HEIGHT,
             bounds.size.w, TIME_HEIGHT));
     calendar_status_layer_create(window_layer,
             GRect(0, 0, bounds.size.w, cal_status_h + 1));  // +1 to stop text clipping

@@ -37,6 +37,13 @@ static void ensure_icon_loaded(int condition) {
 }
 
 static GFont choose_font(int available_h) {
+#ifndef PBL_PLATFORM_EMERY
+    // 144px-wide watches: keep the temperature compact so icon + text fit the row.
+    if (available_h >= 30)
+        return fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK);
+    if (available_h >= 28)
+        return fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
+#endif
     if (available_h >= 42)
         return fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD);
     if (available_h >= 28)
@@ -79,8 +86,14 @@ static void current_weather_update_proc(Layer *layer, GContext *ctx) {
     // Draw icon at natural size, vertically centered.
     if (s_icon_bitmap) {
         int icon_x = pad;
+        // emery: the row frame is already nudged up, so lift the icon a little more.
+#ifdef PBL_PLATFORM_EMERY
         int icon_y = (h - icon_h) / 2 - 4;
+#else
+        int icon_y = (h - icon_h) / 2;
+#endif
         if (icon_y < 0) icon_y = 0;
+        graphics_context_set_compositing_mode(ctx, GCompOpSet);
         graphics_draw_bitmap_in_rect(ctx, s_icon_bitmap,
             GRect(icon_x, icon_y, icon_w, icon_h));
     }
@@ -89,6 +102,10 @@ static void current_weather_update_proc(Layer *layer, GContext *ctx) {
     int text_x = pad + icon_w + pad;
     int text_y = (h - text_h) / 2 - text_h / 2;
     if (text_y < 0) text_y = 0;
+#ifndef PBL_PLATFORM_EMERY
+    // 144px-wide watches: Bitham text rides high; drop it to line up with the icon's center.
+    text_y += 5;
+#endif
     graphics_context_set_text_color(ctx, GColorWhite);
     graphics_draw_text(ctx, s_temp_text, font,
         GRect(text_x, text_y, w - text_x - pad, text_h),

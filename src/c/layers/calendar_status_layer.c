@@ -38,8 +38,10 @@ static GRect month_text_rect(GRect bounds, GFont font) {
     const int text_y = ((bounds.size.h - text_size.h) / 2) - 5;
     return GRect(0, text_y, bounds.size.w, text_size.h + 3);
 #else
+    // Gothic text sits below the top of its box, so pull it up to fill the compact bar.
+    const int y_offset = bounds.size.h >= 18 ? 4 : 3;
     (void)font;
-    return GRect(0, 0, bounds.size.w, bounds.size.h);
+    return GRect(0, -y_offset, bounds.size.w, bounds.size.h + y_offset);
 #endif
 }
 
