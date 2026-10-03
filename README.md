@@ -70,4 +70,4 @@ ForecasWatch2 includes privacy-respecting telemetry. I do not collect precise lo
 - Collected: each weather fetch’s outcome and duration, provider, coarse country code when available, app and watch metadata, and an allowlist of non-sensitive settings.
 - Not collected: coordinates (lat/lon), city/state, manual location strings, or your API keys.
 - Purpose: estimate DAU, see coarse country mix, spot weather-fetch failures, and learn which settings are common.
-- You may opt-out of telemetry by disabling it in the settings.
+- Telemetry is **off by default**. You can opt in by enabling "Share anonymous telemetry" in the settings, and nothing is sent unless the build was also configured with a telemetry endpoint.

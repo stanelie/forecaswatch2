@@ -158,7 +158,8 @@ Pebble.addEventListener('ready',
 function getRuntimeTelemetryConfig() {
     var telemetry = pkg.telemetry || {};
     var endpoint = typeof telemetry.endpoint === 'string' ? telemetry.endpoint : '';
-    var telemetryEnabled = !app.settings || app.settings.telemetryEnabled !== false;
+    // Opt-in: telemetry stays off unless the user explicitly enables it in settings.
+    var telemetryEnabled = Boolean(app.settings && app.settings.telemetryEnabled === true);
 
     return {
         enabled: telemetryEnabled,
@@ -607,7 +608,7 @@ function getDefaultClaySettings() {
         showQt: true,
         vibe: false,
         btIcons: 'both',
-        telemetryEnabled: true
+        telemetryEnabled: false
     };
 }
 

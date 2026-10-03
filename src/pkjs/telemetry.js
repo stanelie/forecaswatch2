@@ -214,7 +214,7 @@ function serializeError(value, maxLength) {
  * @returns {{enabled: boolean, trackWeatherFetch: Function}} Telemetry client.
  */
 function createTelemetryClient(options) {
-    var enabled = !options || options.enabled !== false;
+    var enabled = Boolean(options && options.enabled === true);
     var endpoint = options && typeof options.endpoint === 'string' ? options.endpoint.trim() : '';
     var appVersion = options && typeof options.appVersion === 'string' ? options.appVersion : '0.0.0';
     var buildProfile = options && typeof options.buildProfile === 'string' ? options.buildProfile : 'unknown';
