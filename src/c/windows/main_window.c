@@ -31,6 +31,9 @@
 #endif
 
 static Window *s_main_window;
+// Battery style the current layout was built for. The status bar height and the battery layer frame
+// both depend on it, so a later settings change has to rebuild the layout (see main_window_refresh).
+static bool s_layout_battery_circular;
 
 #ifdef PBL_PLATFORM_EMERY
 // emery: scale the main content bands proportionally to fill the taller screen
@@ -52,6 +55,7 @@ static void main_window_load(Window *window) {
     int h = bounds.size.h;
     window_set_background_color(window, GColorBlack);
 
+    s_layout_battery_circular = g_config->battery_circular;
     int cal_status_h = g_config->battery_circular ? CALENDAR_STATUS_HEIGHT_CIRCULAR : CALENDAR_STATUS_HEIGHT;
 
 #ifdef PBL_PLATFORM_EMERY
@@ -155,6 +159,14 @@ void main_window_create() {
 }
 
 void main_window_refresh() {
+    // Settings can arrive after the window was built (e.g. first sync on a fresh install). If the battery
+    // style changed, rebuild so the status bar and battery layer match; otherwise the ring is squeezed
+    // into the bar-sized frame and looks garbled.
+    if (s_main_window && g_config->battery_circular != s_layout_battery_circular) {
+        main_window_unload(s_main_window);
+        main_window_load(s_main_window);
+        return;
+    }
     time_layer_refresh();
     weather_status_layer_refresh();
     forecast_layer_refresh();
