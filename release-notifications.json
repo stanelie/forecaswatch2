@@ -1,4 +1,8 @@
 {
+  "1.38.0": {
+    "title": "New in v1.38.0!",
+    "body": "The current conditions icon now works when Open-Meteo is your weather provider. It previously always showed N/A."
+  },
   "1.37.0": {
     "title": "New in v1.37.0!",
     "body": "Open-Meteo is now available as a weather provider. Select it in the Weather section of the watchface settings, no API key required."
