@@ -7,7 +7,7 @@ var FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
 
 // Variables requested from the forecast endpoint. To expose a new data point,
 // append it here and map it in withProviderData().
-var CURRENT_VARS = ['temperature_2m'];
+var CURRENT_VARS = ['temperature_2m', 'weather_code', 'is_day'];
 var HOURLY_VARS = ['temperature_2m', 'precipitation_probability', 'precipitation'];
 
 var OpenMeteoProvider = function() {
@@ -19,6 +19,39 @@ var OpenMeteoProvider = function() {
 OpenMeteoProvider.prototype = Object.create(WeatherProvider.prototype);
 OpenMeteoProvider.prototype.constructor = OpenMeteoProvider;
 OpenMeteoProvider.prototype._super = WeatherProvider;
+
+/**
+ * Map an Open-Meteo WMO weather code to one of the watchface condition codes.
+ *
+ * Open-Meteo reports conditions as WMO 4677 codes, which cover more cases than
+ * the ten icons the watch ships. Codes that have no icon of their own collapse
+ * onto the nearest one (for example freezing drizzle onto drizzle).
+ *
+ * @param {*} code WMO weather code from the current block.
+ * @param {*} isDay Open-Meteo is_day flag (1 during the day, 0 at night).
+ * @returns {number} Condition code within [0,9]; 9 (N/A) when unmapped.
+ */
+function wmoToCondition(code, isDay) {
+    // is_day is only needed to pick between the clear-day and clear-night icons.
+    // Treat a missing flag as daytime rather than failing the whole fetch.
+    var night = isDay === 0;
+
+    if (!isFiniteNumber(code)) return 9;
+
+    if (code === 0) return night ? 1 : 0;        // clear sky
+    if (code === 1) return night ? 1 : 0;        // mainly clear
+    if (code === 2) return 2;                    // partly cloudy
+    if (code === 3) return 3;                    // overcast
+    if (code === 45 || code === 48) return 4;    // fog, depositing rime fog
+    if (code >= 51 && code <= 57) return 5;      // drizzle, incl. freezing drizzle
+    if (code >= 61 && code <= 67) return 6;      // rain, incl. freezing rain
+    if (code >= 71 && code <= 77) return 7;      // snow fall, snow grains
+    if (code >= 80 && code <= 82) return 6;      // rain showers
+    if (code === 85 || code === 86) return 7;    // snow showers
+    if (code >= 95 && code <= 99) return 8;      // thunderstorm, incl. hail
+
+    return 9;
+}
 
 /**
  * Build the forecast request URL in the units the watch payload expects.
@@ -149,6 +182,7 @@ OpenMeteoProvider.prototype.withProviderData = function(lat, lon, force, onSucce
         this.precipAmountTrend = numbersOrZero(hourly.precipitation);
         this.startTime = hourly.time[0];
         this.currentTemp = current.temperature_2m;
+        this.conditionCode = wmoToCondition(current.weather_code, current.is_day);
         onSuccess();
     }).bind(this), onFailure);
 };
